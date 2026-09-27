@@ -1,0 +1,13 @@
+services:
+  timelapse:
+    build: .
+    container_name: 3dprinter-timelapse
+    ports:
+      - "5000:5000"
+    environment:
+      # SET YOUR RTSP STREAM URL HERE!
+      # Example: rtsp://username:password@192.168.1.100:554/stream1
+      - RTSP_URL=rtsp://your_user:your_password@your_camera_ip/stream
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
