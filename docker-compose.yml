@@ -5,9 +5,11 @@ services:
     ports:
       - "5000:5000"
     environment:
-      # SET YOUR RTSP STREAM URL HERE!
-      # Example: rtsp://username:password@192.168.1.100:554/stream1
-      - RTSP_URL=rtsp://your_user:your_password@your_camera_ip/stream
+      # SET YOUR RTSP CAMERA SETTINGS HERE!
+      # The app will automatically combine these securely.
+      - RTSP_URL=rtsp://your_camera_ip:554/stream1
+      - RTSP_USER=your_username
+      - RTSP_PASSWORD=your_password
     volumes:
       - ./data:/app/data
     restart: unless-stopped

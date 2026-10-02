@@ -12,6 +12,23 @@ app = Flask(__name__)
 
 # --- Configuration ---
 RTSP_URL = os.environ.get("RTSP_URL", "")
+RTSP_USER = os.environ.get("RTSP_USER", "")
+RTSP_PASSWORD = os.environ.get("RTSP_PASSWORD", "")
+
+import urllib.parse
+if RTSP_URL and RTSP_USER and RTSP_PASSWORD:
+    # Safely insert credentials into the RTSP URL
+    parsed = urllib.parse.urlsplit(RTSP_URL)
+    encoded_user = urllib.parse.quote(RTSP_USER, safe="")
+    encoded_pass = urllib.parse.quote(RTSP_PASSWORD, safe="")
+
+    # If URL already has credentials, replace them. Otherwise insert.
+    netloc = f"{encoded_user}:{encoded_pass}@{parsed.hostname}"
+    if parsed.port:
+        netloc += f":{parsed.port}"
+
+    RTSP_URL = urllib.parse.urlunsplit((parsed.scheme, netloc, parsed.path, parsed.query, parsed.fragment))
+
 DATA_DIR = "data"
 FRAMES_DIR = os.path.join(DATA_DIR, "frames")
 VIDEOS_DIR = os.path.join(DATA_DIR, "videos")
@@ -38,15 +55,8 @@ class Camera:
         self.thread.start()
 
     def _update(self):
-        # Unquote the URL because OpenCV's FFmpeg backend sometimes fails to parse
-        # url-encoded credentials correctly, or we can explicitly use CAP_FFMPEG.
-        import urllib.parse
-        # Let's try passing it unquoted or quoted depending on what FFmpeg expects.
-        # Often FFmpeg expects the raw characters for username/password, even with special chars,
-        # as long as it parses the `@` correctly. Wait, if there's an `@` in the password,
-        # it breaks the URL parsing unless encoded. FFmpeg handles URL encoding.
-        # But OpenCV fell back to CAP_IMAGES. We must force CAP_FFMPEG.
-
+        # We explicitly use CAP_FFMPEG to prevent OpenCV from misinterpreting
+        # URL-encoded characters (like %21) as an image sequence.
         while self.running:
             if self.rtsp_url:
                 if self.cap is None or not self.cap.isOpened():
